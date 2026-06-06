@@ -263,5 +263,17 @@ app.get('/api/profiles', async (req, res) => {
 });
 
 app.listen(PORT, () => {
+    const path = require('path');
+
+// 1. Serve static frontend files (HTML, CSS, JS) from the root directory
+app.use(express.static(__dirname));
+
+// 2. Fallback route to serve index.html when a user lands on your home URL '/'
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+// Your existing listen block
+app.listen(PORT, () => {
     console.log(`🚀 Premium Analytics Server active on port ${PORT}`);
 });
