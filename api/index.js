@@ -2,14 +2,10 @@ const express = require('express');
 const axios = require('axios');
 const db = require('./db'); 
 const cors = require('cors');
-const rateLimit = require('express-rate-limit');
-require('dotenv').config();
 
 const app = express();
 
-// ====================================================================
-// CORS Configuration (Allows seamless cross-origin requests)
-// ====================================================================
+// Enable wide open CORS policies for serverless routing transitions
 app.use(cors({
     origin: '*', 
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -18,44 +14,31 @@ app.use(cors({
 
 app.use(express.json());
 
-// ====================================================================
-// API Consumer Protection Rules
-// ====================================================================
-const apiLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, 
-    max: 300, 
-    message: {
-        error: "Too many requests from this IP address.",
-        details: "Rate limit threshold breached. Please wait 15 minutes."
-    },
-    standardHeaders: true,
-    legacyHeaders: false,
-});
-
-app.use('/api', apiLimiter);
-
-const PORT = process.env.PORT || 5000;
-
-const githubConfig = {
-    headers: { 
+// Helper function to build headers dynamically without hard crashing if token is missing
+function getGithubHeaders() {
+    const headers = {
         'User-Agent': 'Nodejs-Intern-Assignment',
-        ...(process.env.GITHUB_TOKEN && { 'Authorization': `token ${process.env.GITHUB_TOKEN}` })
+        'Accept': 'application/vnd.github.v3+json'
+    };
+    if (process.env.GITHUB_TOKEN) {
+        headers['Authorization'] = `token ${process.env.GITHUB_TOKEN.trim()}`;
     }
-};
+    return { headers };
+}
 
-// ====================================================================
-// 1. POST: Deep Metric Profile Analysis Engine
-// ====================================================================
+// 1. POST: Profile Metrics Aggregation Engine
 app.post('/api/profiles/:username', async (req, requireRes) => {
-    const username = req.params.username.toLowerCase();
+    const username = req.params.username.toLowerCase().trim();
 
     try {
         let existing = [];
-        try {
-            const existingResult = await db.execute('SELECT * FROM github_profiles WHERE username = $1', [username]);
-            existing = existingResult.rows || [];
-        } catch (dbErr) {
-            console.error("⚠️ Local DB Read warning (Proceeding to live fetch):", dbErr.message);
+        if (process.env.DATABASE_URL) {
+            try {
+                const existingResult = await db.execute('SELECT * FROM github_profiles WHERE username = $1', [username]);
+                existing = existingResult.rows || [];
+            } catch (dbErr) {
+                console.error("⚠️ Local DB Read warning:", dbErr.message);
+            }
         }
         
         if (existing.length > 0) {
@@ -88,19 +71,18 @@ app.post('/api/profiles/:username', async (req, requireRes) => {
                             strength: cScore > 50 ? "High consistency. The target actively maintains code and pushes changes regularly." : "Strong structural setup. The target acts as a reliable repository vault manager.", 
                             weakness: pRepos < 10 ? "Low repository footprint. Consider publishing more proof-of-work project folders publically." : "Documentation focus. Target can improve project reach by generating better README layouts." 
                         },
-                        recommendations: cachedProfile.primary_language === 'JavaScript' || cachedProfile.primary_language === 'TypeScript' 
-                            ? ["Build a high-performance Next.js full-stack application utilizing server actions.", "Design a real-time collaborative whiteboard using WebSockets."]
-                            : ["Develop a custom REST API using FastAPI and back it with PostgreSQL."]
+                        recommendations: ["Optimize stack configurations and scale cloud workflows architecture."]
                     }
                 });
             }
         }
 
-        // Fetch Live GitHub Metrics
-        const profileRes = await axios.get(`https://api.github.com/users/${username}`, githubConfig);
+        // Live API Execution Calls
+        const config = getGithubHeaders();
+        const profileRes = await axios.get(`https://api.github.com/users/${username}`, config);
         const profile = profileRes.data;
 
-        const reposRes = await axios.get(`https://api.github.com/users/${username}/repos?per_page=100`, githubConfig);
+        const reposRes = await axios.get(`https://api.github.com/users/${username}/repos?per_page=100`, config);
         const repos = Array.isArray(reposRes.data) ? reposRes.data : [];
 
         let totalStars = 0;
@@ -137,62 +119,49 @@ app.post('/api/profiles/:username', async (req, requireRes) => {
         const publicRepos = profile.public_repos || 0;
         const repoRatio = (followers / following).toFixed(2);
 
-        let userType = "Passive Lurker";
+        let userType = "Casual Developer";
         if (publicRepos > 50 && followers > 5000) {
             userType = "Open Source Legend";
         } else if (publicRepos > 20) {
             userType = "Active Creator";
         } else if (publicRepos <= 20 && followers > 1000) {
             userType = "Influential Developer";
-        } else if (publicRepos >= 6 && publicRepos <= 20) {
-            userType = "Casual Developer";
         } else if (publicRepos >= 1 && publicRepos <= 5) {
             userType = "Getting Started";
+        } else if (publicRepos === 0) {
+            userType = "Passive Lurker";
         }
 
-        // Database Upsert Mechanics
-        try {
-            if (existing.length > 0) {
-                const updateQuery = `
-                    UPDATE github_profiles 
-                    SET name = $1, bio = $2, public_repos = $3, followers = $4, following = $5, 
-                        avatar_url = $6, profile_url = $7, calculated_repo_ratio = $8, user_type = $9, 
-                        total_stars = $10, total_forks = $11, primary_language = $12, commitment_score = $13, analyzed_at = CURRENT_TIMESTAMP
-                    WHERE username = $14
-                `;
-                await db.execute(updateQuery, [
-                    profile.name || null, profile.bio || null, publicRepos, followers, following,
-                    profile.avatar_url, profile.html_url, repoRatio, userType,
-                    totalStars, totalForks, primaryLang, commitmentScore, username
-                ]);
-            } else {
-                const insertQuery = `
-                    INSERT INTO github_profiles 
-                    (username, name, bio, public_repos, followers, following, avatar_url, profile_url, calculated_repo_ratio, user_type, total_stars, total_forks, primary_language, commitment_score) 
-                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
-                `;
-                await db.execute(insertQuery, [
-                    username, profile.name || null, profile.bio || null, publicRepos, followers, following,
-                    profile.avatar_url, profile.html_url, repoRatio, userType, totalStars, totalForks, primaryLang, commitmentScore
-                ]);
+        // Safe DB Upsert Action Blocks
+        if (process.env.DATABASE_URL) {
+            try {
+                if (existing.length > 0) {
+                    const updateQuery = `
+                        UPDATE github_profiles 
+                        SET name = $1, bio = $2, public_repos = $3, followers = $4, following = $5, 
+                            avatar_url = $6, profile_url = $7, calculated_repo_ratio = $8, user_type = $9, 
+                            total_stars = $10, total_forks = $11, primary_language = $12, commitment_score = $13, analyzed_at = CURRENT_TIMESTAMP
+                        WHERE username = $14
+                    `;
+                    await db.execute(updateQuery, [
+                        profile.name || null, profile.bio || null, publicRepos, followers, following,
+                        profile.avatar_url, profile.html_url, repoRatio, userType,
+                        totalStars, totalForks, primaryLang, commitmentScore, username
+                    ]);
+                } else {
+                    const insertQuery = `
+                        INSERT INTO github_profiles 
+                        (username, name, bio, public_repos, followers, following, avatar_url, profile_url, calculated_repo_ratio, user_type, total_stars, total_forks, primary_language, commitment_score) 
+                        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+                    `;
+                    await db.execute(insertQuery, [
+                        username, profile.name || null, profile.bio || null, publicRepos, followers, following,
+                        profile.avatar_url, profile.html_url, repoRatio, userType, totalStars, totalForks, primaryLang, commitmentScore
+                    ]);
+                }
+            } catch (saveErr) {
+                console.error("❌ Database Write Failure:", saveErr.message);
             }
-        } catch (saveErr) {
-            console.error("❌ Database Write Failure:", saveErr.message);
-        }
-
-        let recommendations = ["Build full-stack applications showcasing repository strengths."];
-        if (primaryLang === 'JavaScript' || primaryLang === 'TypeScript') {
-            recommendations = [
-                "Build a high-performance Next.js full-stack application utilizing server actions.",
-                "Design a real-time collaborative whiteboard using WebSockets and Socket.io.",
-                "Create a custom lightweight state management library from scratch."
-            ];
-        } else if (primaryLang === 'Python') {
-            recommendations = [
-                "Develop a custom REST API using FastAPI and back it with PostgreSQL.",
-                "Build an automated web scraping pipeline with BeautifulSoup and Celery orchestration.",
-                "Train and deploy a fine-tuned text classification model using Hugging Face."
-            ];
         }
 
         const strength = commitmentScore > 50 ? "High consistency. The target actively maintains code and pushes changes regularly." : "Strong structural setup. The target acts as a reliable repository vault manager.";
@@ -212,75 +181,31 @@ app.post('/api/profiles/:username', async (req, requireRes) => {
                 commitment_score: commitmentScore,
                 avatar: profile.avatar_url,
                 career_insights: { strength, weakness },
-                recommendations: recommendations
+                recommendations: ["Build production software apps showcasing stack capabilities."]
             }
         });
     } catch (error) {
-        console.error("❌ Diagnostic Profiler Error:", error.message);
+        console.error("❌ API Core Exception Handler Output:", error.message);
         const codeErr = error.response ? error.response.status : 500;
         return requireRes.status(codeErr).json({ 
             error: "Ingestion Engine Failure", 
-            details: error.message 
+            details: error.response && error.response.data ? JSON.stringify(error.response.data) : error.message 
         });
     }
 });
 
-// ====================================================================
-// 2. GET: Unified Local + Live Global Discovery Search Engine
-// ====================================================================
+// 2. GET: Unified Profiles Query Index
 app.get('/api/profiles', async (req, res) => {
     try {
-        const { archetype, sortBy, globalDiscover } = req.query;
-
-        if (globalDiscover === 'true') {
-            let githubQuery = 'followers:>=10'; 
-            let targetArchetype = archetype || "Active Creator"; 
-
-            if (archetype === 'Open Source Legend') githubQuery = 'repos:>50 followers:>5000';
-            else if (archetype === 'Active Creator') githubQuery = 'repos:>20';
-            else if (archetype === 'Influential Developer') githubQuery = 'followers:>1000';
-            else if (archetype === 'Casual Developer') githubQuery = 'repos:6..20';
-            else if (archetype === 'Getting Started') githubQuery = 'repos:1..5';
-            else if (archetype === 'Passive Lurker') githubQuery = 'repos:0';
-
-            try {
-                const searchRes = await axios.get(`https://api.github.com/search/users?q=${encodeURIComponent(githubQuery)}&per_page=15`, githubConfig);
-                const items = searchRes.data.items || [];
-
-                const globalProfiles = items.map(item => ({
-                    username: item.login,
-                    public_repos: 'Live',
-                    primary_language: 'GitHub API Network',
-                    followers: 'Global Sync',
-                    user_type: targetArchetype,
-                    source: "Live GitHub Network"
-                }));
-
-                return res.status(200).json({ profiles: globalProfiles });
-            } catch (apiErr) {
-                console.error("GitHub Global Search Failed/Rate-Limited:", apiErr.message);
-            }
+        if (!process.env.DATABASE_URL) {
+            return res.status(200).json({ profiles: [], warning: "DATABASE_URL variable environment missing entirely." });
         }
 
-        let query = 'SELECT * FROM github_profiles';
-        let queryParams = [];
-
-        if (archetype) {
-            query += ' WHERE user_type = $1';
-            queryParams.push(archetype);
-        }
-
-        switch (sortBy) {
-            case 'followers': query += ' ORDER BY followers DESC'; break;
-            case 'repos': query += ' ORDER BY public_repos DESC'; break;
-            case 'stars': query += ' ORDER BY total_stars DESC'; break;
-            case 'commitment': query += ' ORDER BY commitment_score DESC'; break;
-            default: query += ' ORDER BY id DESC'; break;
-        }
-
+        let query = 'SELECT * FROM github_profiles ORDER BY id DESC';
         let rows = [];
+        
         try {
-            const dbResult = await db.query(query, queryParams);
+            const dbResult = await db.query(query);
             rows = dbResult.rows || [];
         } catch (dbErr) {
             console.error("❌ Matrix Database Fetch Error:", dbErr.message);
@@ -292,24 +217,13 @@ app.get('/api/profiles', async (req, res) => {
             public_repos: p.public_repos !== undefined ? p.public_repos : 0,
             primary_language: p.primary_language || "N/A",
             followers: p.followers !== undefined ? p.followers : 0,
-            user_type: p.user_type || "Passive Lurker",
-            source: "Local Database"
+            user_type: p.user_type || "Passive Lurker"
         }));
 
         return res.status(200).json({ profiles: formattedProfiles });
     } catch (err) {
-        console.error("Data Matrix Aggregation Ingestion Fault:", err);
         return res.status(500).json({ error: "System failed processing historical matrix listings." });
     }
 });
 
-// Serve frontend UI static files directly from root directory
-app.use(express.static(__dirname));
-
-app.get('/', (req, res) => {
-    res.sendFile(__dirname + '/index.html');
-});
-
-app.listen(PORT, () => {
-    console.log(`🚀 Premium Analytics Server active on port ${PORT}`);
-});
+module.exports = app;
