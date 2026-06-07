@@ -1,4 +1,8 @@
-CREATE TABLE IF NOT EXISTS github_profiles (
+-- Drop the table if it already exists to avoid collisions during generation
+DROP TABLE IF EXISTS github_profiles;
+
+-- Create core enterprise telemetry sync structure
+CREATE TABLE github_profiles (
     id SERIAL PRIMARY KEY,
     username VARCHAR(100) UNIQUE NOT NULL,
     name VARCHAR(150),
@@ -17,3 +21,6 @@ CREATE TABLE IF NOT EXISTS github_profiles (
     analyzed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     looked_up_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Index frequently accessed username identifiers for enhanced cache extraction lookups
+CREATE INDEX IF NOT EXISTS idx_github_profiles_username ON github_profiles(username);
