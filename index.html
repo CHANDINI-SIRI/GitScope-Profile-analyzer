@@ -240,7 +240,6 @@
             color: #a5b4fc;
         }
 
-        /* Specialized Print Layout Configuration Rules */
         @media print {
             body {
                 background: white !important;
@@ -372,7 +371,8 @@
 </div>
 
 <script>
-    const API_BASE = "http://localhost:5000/api";
+    // FIXED: Shifted from absolute Render link to relative Vercel app path 
+    const API_BASE = "/api";
 
     function getBadgeClass(type) {
         if (!type) return 'badge-lurker';
@@ -493,7 +493,6 @@
                         ? `<span style="font-size:10px; color:#38bdf8; background:rgba(56,189,248,0.1); padding:2px 6px; border-radius:4px; margin-left:8px;">Global</span>` 
                         : '';
 
-                    // Using attributes to cleanly process clicks with zero chance of string injection breakdown
                     const row = `
                     <tr class="history-row" data-username="${p.username}" data-live="${isLive}" style="cursor: ${isLive ? 'pointer' : 'default'}">
                         <td class="tbl-username" style="text-decoration: ${isLive ? 'underline' : 'none'};">
@@ -507,7 +506,6 @@
                     tbody.insertAdjacentHTML('beforeend', row);
                 });
 
-                // Attach robust non-breaking event click loops dynamically 
                 document.querySelectorAll('.history-row').forEach(row => {
                     row.addEventListener('click', function() {
                         if (this.getAttribute('data-live') === 'true') {
