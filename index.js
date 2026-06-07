@@ -262,18 +262,19 @@ app.get('/api/profiles', async (req, res) => {
     }
 });
 
-app.listen(PORT, () => {
-    // DELETE OR REMOVE THESE LINES THAT ARE CAUSING THE CRASH:
-const path = require('path'); 
-// 1. Point Express to serve your static frontend files
+// ====================================================================
+// 3. Fallback Route & Port Listener (Clean & Balanced Termination)
+// ====================================================================
+
+// Point Express to serve static frontend asset files
 app.use(express.static(__dirname));
 
-// 2. Fallback route to serve index.html directly
+// Directly routing the home route to point to your UI
 app.get('/', (req, res) => {
     res.sendFile(__dirname + '/index.html');
 });
 
-// 3. Your existing port listener (Keep this exactly as you had it)
+// Primary Server Listener
 app.listen(PORT, () => {
     console.log(`🚀 Premium Analytics Server active on port ${PORT}`);
 });
