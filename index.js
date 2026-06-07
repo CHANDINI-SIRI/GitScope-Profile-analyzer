@@ -265,10 +265,15 @@ app.get('/api/profiles', async (req, res) => {
 app.listen(PORT, () => {
     // DELETE OR REMOVE THESE LINES THAT ARE CAUSING THE CRASH:
 const path = require('path'); 
+// 1. Point Express to serve your static frontend files
 app.use(express.static(__dirname));
-app.get('/', (req, res) => { ... });
 
-// KEEP ONLY YOUR ORIGINAL LISTEN BLOCK AT THE BOTTOM:
+// 2. Fallback route to serve index.html directly
+app.get('/', (req, res) => {
+    res.sendFile(__dirname + '/index.html');
+});
+
+// 3. Your existing port listener (Keep this exactly as you had it)
 app.listen(PORT, () => {
     console.log(`🚀 Premium Analytics Server active on port ${PORT}`);
 });
