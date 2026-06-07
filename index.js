@@ -11,7 +11,7 @@ app.use(express.json());
 
 function getGithubHeaders() {
     const headers = {
-        'User-Agent': 'Nodejs-Assignment',
+        'User-Agent': 'Nodejs-Assignment-Engine',
         'Accept': 'application/vnd.github.v3+json'
     };
     if (process.env.GITHUB_TOKEN) {
@@ -20,15 +20,19 @@ function getGithubHeaders() {
     return { headers };
 }
 
-// 1. POST: Profile Processing Engine
+// 1. POST: Profile Aggregation & Upsert Engine
 app.post('/api/profiles/:username', async (req, res) => {
     const username = req.params.username.toLowerCase().trim();
 
     try {
         let existing = [];
         if (process.env.DATABASE_URL) {
-            const existingResult = await db.execute('SELECT * FROM github_profiles WHERE username = $1', [username]);
-            existing = existingResult.rows || [];
+            try {
+                const existingResult = await db.execute('SELECT * FROM github_profiles WHERE username = $1', [username]);
+                existing = existingResult.rows || [];
+            } catch (dbErr) {
+                console.error("⚠️ Local Cache Read Warning:", dbErr.message);
+            }
         }
         
         if (existing.length > 0) {
@@ -53,7 +57,7 @@ app.post('/api/profiles/:username', async (req, res) => {
             });
         }
 
-        // Live API Calls
+        // Live API Invocation Block
         const config = getGithubHeaders();
         const profileRes = await axios.get(`https://api.github.com/users/${username}`, config);
         const profile = profileRes.data;
@@ -80,12 +84,16 @@ app.post('/api/profiles/:username', async (req, res) => {
         if (publicRepos === 0) userType = "Passive Lurker";
 
         if (process.env.DATABASE_URL) {
-            await db.execute(
-                `INSERT INTO github_profiles (username, name, bio, public_repos, followers, following, avatar_url, profile_url, user_type, total_stars, primary_language, commitment_score) 
-                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-                 ON CONFLICT (username) DO UPDATE SET public_repos = EXCLUDED.public_repos, followers = EXCLUDED.followers, total_stars = EXCLUDED.total_stars`,
-                [username, profile.name || null, profile.bio || null, publicRepos, followers, profile.following || 0, profile.avatar_url, profile.html_url, userType, totalStars, primaryLang, 75]
-            );
+            try {
+                await db.execute(
+                    `INSERT INTO github_profiles (username, name, bio, public_repos, followers, following, avatar_url, profile_url, user_type, total_stars, primary_language, commitment_score) 
+                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+                     ON CONFLICT (username) DO UPDATE SET public_repos = EXCLUDED.public_repos, followers = EXCLUDED.followers, total_stars = EXCLUDED.total_stars`,
+                    [username, profile.name || null, profile.bio || null, publicRepos, followers, profile.following || 0, profile.avatar_url, profile.html_url, userType, totalStars, primaryLang, 75]
+                );
+            } catch (saveErr) {
+                console.error("❌ Database Write Failure:", saveErr.message);
+            }
         }
 
         return res.status(201).json({
@@ -111,31 +119,36 @@ app.post('/api/profiles/:username', async (req, res) => {
     }
 });
 
-// 2. GET: Matrix Data Source Fetch
+// 2. GET: Telemetry Matrix Query (Fixed Property Key Mapping)
 app.get('/api/profiles', async (req, res) => {
     try {
         if (!process.env.DATABASE_URL) return res.status(200).json({ profiles: [] });
-        const result = await db.query('SELECT * FROM github_profiles ORDER BY id DESC');
         
-        const profiles = (result.rows || []).map(p => ({
+        const result = await db.query('SELECT * FROM github_profiles ORDER BY id DESC');
+        const rows = result.rows || [];
+        
+        const profiles = rows.map(p => ({
             username: p.username,
-            public_repos: p.public_repos || 0,
+            public_repos: p.public_repos !== undefined ? p.public_repos : 0,
             primary_language: p.primary_language || "N/A",
-            followers: p.followers || 0,
+            followers: p.followers !== undefined ? p.followers : 0,
             user_type: p.user_type || "Passive Lurker"
         }));
+        
         return res.status(200).json({ profiles });
     } catch (err) {
-        return res.status(500).json({ error: err.message });
+        console.error("❌ History Matrix Read Failure:", err.message);
+        return res.status(500).json({ error: "Database disconnect context", details: err.message });
     }
 });
 
-// Static Assets Serving
+// 3. Static Assets Delivery Layer
 app.use(express.static(path.join(__dirname, './')));
 
-// FIX: Pass a native JavaScript Regular Expression literal to bypass string string-parsing constraints entirely
-app.get(/^(?!\/api).*$/, (req, res) => {
+// Wildcard named fallback to satisfy strict path-to-regexp parsers on modern environments
+app.get('/*splat', (req, res) => {
     res.sendFile(path.join(__dirname, './index.html'));
 });
+
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running smoothly on port ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 System engine active on port ${PORT}`));

@@ -6,25 +6,14 @@
     <title>GitScope Profile Engine</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body {
-            background-color: #0b0f19;
-            color: #f3f4f6;
-        }
-        .glass-panel {
-            background: rgba(17, 24, 39, 0.7);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-        }
-        .metric-card {
-            background: rgba(21, 29, 47, 0.6);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
+        body { background-color: #0b0f19; color: #f3f4f6; }
+        .glass-panel { background: rgba(17, 24, 39, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); }
+        .metric-card { background: rgba(21, 29, 47, 0.6); border: 1px solid rgba(255, 255, 255, 0.05); }
     </style>
 </head>
 <body class="min-h-screen py-10 px-4 font-sans">
 
     <div class="max-w-4xl mx-auto space-y-6">
-        
         <div class="text-center space-y-2 mb-8">
             <h1 class="text-4xl font-extrabold tracking-tight text-white">GitScope Profile Engine</h1>
             <p class="text-sm text-blue-400 font-medium tracking-wide">Enterprise Developer Metrics & Cache-Backed Behavioral Archetyping</p>
@@ -32,18 +21,10 @@
 
         <div class="glass-panel p-4 rounded-2xl shadow-xl">
             <form id="searchForm" class="flex gap-3">
-                <input 
-                    type="text" 
-                    id="usernameInput" 
-                    placeholder="Search GitHub profile..." 
-                    required
-                    class="flex-1 bg-[#161b26] text-white border border-gray-700 rounded-xl px-4 py-3 focus:outline-none focus:border-blue-500 transition text-sm"
-                >
-                <button 
-                    type="submit" 
-                    id="searchBtn"
-                    class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-6 py-3 rounded-xl transition duration-200 text-sm whitespace-nowrap shadow-lg shadow-indigo-600/20"
-                >
+                <input type="text" id="usernameInput" placeholder="Search GitHub profile..." required
+                    class="flex-1 bg-[#161b26] text-white border border-gray-700 rounded-xl px-4 py-3 focus:outline-none focus:border-blue-500 transition text-sm">
+                <button type="submit" id="searchBtn"
+                    class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-6 py-3 rounded-xl transition duration-200 text-sm whitespace-nowrap shadow-lg shadow-indigo-600/20">
                     Analyze Target
                 </button>
             </form>
@@ -60,9 +41,6 @@
                         <span id="profileArchetypeTag" class="inline-block mt-1 bg-gray-800 text-gray-400 text-[10px] font-black tracking-widest uppercase px-2.5 py-1 rounded-md border border-gray-700"></span>
                     </div>
                 </div>
-                <button onclick="alert('PDF Report exported!')" class="flex items-center gap-2 bg-[#1b2336] hover:bg-[#242f49] text-gray-300 border border-gray-700 px-4 py-2 rounded-xl text-xs font-semibold transition">
-                    📊 Export PDF Report
-                </button>
             </div>
 
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -80,19 +58,7 @@
                 </div>
                 <div class="metric-card p-4 rounded-xl text-center">
                     <div id="metricTrend" class="text-3xl font-extrabold text-emerald-400">0%</div>
-                    <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mt-1">Commitment Trend 📊</div>
-                </div>
-            </div>
-
-            <div class="grid md:grid-cols-2 gap-4">
-                <div class="bg-[#131a2a] border border-gray-800/60 p-4 rounded-xl space-y-2">
-                    <h4 class="text-xs font-bold text-indigo-400 uppercase tracking-wider">📊 Career Diagnostic</h4>
-                    <p class="text-xs text-gray-300"><strong class="text-emerald-400">Strength:</strong> <span id="insightStrength"></span></p>
-                    <p class="text-xs text-gray-300"><strong class="text-red-400">Growth Area:</strong> <span id="insightWeakness"></span></p>
-                </div>
-                <div class="bg-[#131a2a] border border-gray-800/60 p-4 rounded-xl space-y-2">
-                    <h4 class="text-xs font-bold text-amber-400 uppercase tracking-wider">💡 Recommended Path Roadmap</h4>
-                    <ul id="recommendationsList" class="text-xs text-gray-300 list-disc pl-4 space-y-1"></ul>
+                    <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mt-1">Commitment Trend</div>
                 </div>
             </div>
         </div>
@@ -117,7 +83,6 @@
                 </table>
             </div>
         </div>
-
     </div>
 
     <script>
@@ -140,7 +105,7 @@
                 const response = await fetch(`/api/profiles/${encodeURIComponent(username)}`, { method: 'POST' });
                 const data = await response.json();
 
-                if (!response.ok) throw new Error(data.details || data.error || "Execution error.");
+                if (!response.ok) throw new Error(data.details || data.error || "System ingestion error.");
 
                 const insights = data.insights;
                 document.getElementById('userAvatar').src = insights.avatar || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=150';
@@ -150,16 +115,6 @@
                 document.getElementById('metricStars').innerText = insights.total_stars_accumulated;
                 document.getElementById('metricStack').innerText = insights.primary_language || 'Unknown';
                 document.getElementById('metricTrend').innerText = `${insights.commitment_score}%`;
-                document.getElementById('insightStrength').innerText = insights.career_insights?.strength || "N/A";
-                document.getElementById('insightWeakness').innerText = insights.career_insights?.weakness || "N/A";
-
-                const roadmap = document.getElementById('recommendationsList');
-                roadmap.innerHTML = '';
-                insights.recommendations.forEach(rec => {
-                    const li = document.createElement('li');
-                    li.innerText = rec;
-                    roadmap.appendChild(li);
-                });
 
                 resultsPanel.classList.remove('hidden');
                 hideStatus();
@@ -174,7 +129,7 @@
         async function fetchSavedProfiles() {
             try {
                 const response = await fetch('/api/profiles');
-                if(!response.ok) throw new Error("Parse error");
+                if(!response.ok) throw new Error("Database return structure error");
                 const data = await response.json();
                 renderTable(data.profiles || []);
             } catch(err) {
@@ -185,7 +140,7 @@
         function renderTable(profiles) {
             matrixTableBody.innerHTML = '';
             if(profiles.length === 0) {
-                matrixTableBody.innerHTML = `<tr><td colspan="5" class="py-4 text-center text-gray-500">No records found.</td></tr>`;
+                matrixTableBody.innerHTML = `<tr><td colspan="5" class="py-4 text-center text-gray-500">No records stored inside historical lookup data.</td></tr>`;
                 return;
             }
             profiles.forEach(p => {
@@ -208,6 +163,7 @@
 
         function showStatus(msg, type) {
             statusBanner.innerText = msg;
+            statusBanner.classList.remove('hidden');
             statusBanner.className = `p-4 rounded-xl text-sm font-medium border ${type === 'info' ? 'bg-blue-950/50 text-blue-400 border-blue-800' : 'bg-red-950/50 text-red-400 border-red-900'}`;
         }
         function hideStatus() { statusBanner.classList.add('hidden'); }
