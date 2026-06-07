@@ -2,10 +2,11 @@ const express = require('express');
 const axios = require('axios');
 const db = require('./db'); 
 const cors = require('cors');
+const path = require('path');
 
 const app = express();
 
-// Enable wide open CORS policies for serverless routing transitions
+// Enable wide open CORS policies for routing transitions
 app.use(cors({
     origin: '*', 
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -226,4 +227,16 @@ app.get('/api/profiles', async (req, res) => {
     }
 });
 
-module.exports = app;
+// 3. Static File Server Handler for Railway Containers
+// Serves index.html directly from your root directory
+app.use(express.static(path.join(__dirname, './')));
+
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, './index.html'));
+});
+
+// 4. Live Server Port Orchestrator
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`🚀 Continuous architecture engine live on port ${PORT}`);
+});
