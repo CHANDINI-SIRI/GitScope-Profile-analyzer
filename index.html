@@ -3,541 +3,239 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GitScope // Advanced Profile Intelligence Engine</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    
+    <title>GitScope Profile Engine</title>
     <style>
         :root {
-            --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #020617 100%);
-            --glass-bg: rgba(255, 255, 255, 0.03);
-            --glass-border: rgba(255, 255, 255, 0.08);
-            --text-primary: #f8fafc;
-            --text-secondary: #94a3b8;
-            --accent-glow: #6366f1;
-            --accent-success: #10b981;
+            --bg-main: #0B0F19;
+            --bg-card: #141B2D;
+            --accent: #5F6FFF;
+            --text-main: #E2E8F0;
+            --text-muted: #94A3B8;
+            --error: #EF4444;
+            --success: #10B981;
         }
-
         body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background: var(--bg-gradient);
-            background-attachment: fixed;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             margin: 0;
             padding: 40px 20px;
-            color: var(--text-primary);
-            min-height: 100vh;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
+            align-items: center;
         }
-
-        .container {
-            width: 100%;
-            max-width: 1000px;
-        }
-
-        header {
-            text-align: center;
-            margin-bottom: 40px;
-        }
-
-        h1 {
-            font-size: 38px;
-            font-weight: 700;
-            margin: 0 0 10px 0;
-            background: linear-gradient(to right, #fff 20%, #a5b4fc 50%, #6366f1 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            letter-spacing: -1px;
-        }
-
-        header p {
-            color: var(--text-secondary);
-            font-size: 16px;
-            margin: 0;
-        }
-
-        .search-area {
-            background: var(--glass-bg);
-            backdrop-filter: blur(16px);
-            border: 1px solid var(--glass-border);
-            padding: 16px;
-            border-radius: 16px;
+        .container { width: 100%; max-width: 900px; }
+        h1 { text-align: center; color: #FFF; font-size: 2.5rem; margin-bottom: 5px; }
+        .subtitle { text-align: center; color: var(--text-muted); margin-bottom: 30px; }
+        .search-box {
+            background: var(--bg-card);
+            padding: 20px;
+            border-radius: 12px;
             display: flex;
-            gap: 12px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
-            margin-bottom: 30px;
+            gap: 15px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
         }
-
         input {
             flex: 1;
-            background: rgba(0, 0, 0, 0.2);
-            border: 1px solid var(--glass-border);
-            padding: 16px;
-            border-radius: 12px;
+            background: #0B0F19;
+            border: 1px solid #2D3748;
+            border-radius: 8px;
+            padding: 12px 16px;
             color: white;
-            font-size: 16px;
-            transition: all 0.3s ease;
+            font-size: 1rem;
         }
-
-        input:focus {
-            outline: none;
-            border-color: var(--accent-glow);
-            box-shadow: 0 0 15px rgba(99, 102, 241, 0.3);
-        }
-
         button {
-            padding: 0 28px;
-            background: var(--accent-glow);
+            background: var(--accent);
             color: white;
             border: none;
-            border-radius: 12px;
-            font-size: 15px;
+            border-radius: 8px;
+            padding: 12px 24px;
             font-weight: 600;
             cursor: pointer;
-            transition: transform 0.2s, background 0.2s;
-            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+            transition: opacity 0.2s;
         }
-
-        button:hover {
-            background: #4f46e5;
-            transform: translateY(-2px);
-        }
-
-        .profile-card {
-            background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%);
-            backdrop-filter: blur(16px);
-            border: 1px solid var(--glass-border);
-            border-radius: 24px;
-            padding: 35px;
-            display: none;
-            margin-bottom: 40px;
-            box-shadow: 0 30px 60px rgba(0,0,0,0.4);
-        }
-
-        .profile-meta {
-            display: flex;
-            align-items: center;
-            gap: 24px;
-            border-bottom: 1px solid var(--glass-border);
-            padding-bottom: 25px;
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        .card, .table-container {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 25px;
             margin-bottom: 25px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
         }
-
-        .avatar {
-            width: 90px;
-            height: 90px;
-            border-radius: 20px;
-            border: 2px solid rgba(255,255,255,0.1);
-        }
-
-        .profile-titles h2 {
-            margin: 0;
-            font-size: 26px;
-            font-weight: 600;
-        }
-
-        .archetype-badge {
-            display: inline-block;
-            margin-top: 8px;
-            padding: 6px 14px;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: 600;
-            text-transform: uppercase;
-            font-family: 'JetBrains Mono', monospace;
-        }
-
-        .badge-legend { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
-        .badge-creator { background: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3); }
-        .badge-influencer { background: rgba(236, 72, 153, 0.15); color: #f472b6; border: 1px solid rgba(236, 72, 153, 0.3); }
-        .badge-casual { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
-        .badge-started { background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); }
-        .badge-lurker { background: rgba(148, 163, 184, 0.15); color: #cbd5e1; border: 1px solid rgba(148, 163, 184, 0.3); }
-
-        .metric-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 16px;
-        }
-
-        .metric-card {
-            background: rgba(0, 0, 0, 0.15);
-            border: 1px solid var(--glass-border);
-            padding: 20px;
-            border-radius: 14px;
-            text-align: center;
-        }
-
-        .metric-num {
-            font-size: 28px;
-            font-weight: 700;
-            color: white;
-            font-family: 'JetBrains Mono', monospace;
-        }
-
-        .metric-label {
-            font-size: 12px;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-top: 6px;
-        }
-
-        .insights-grid {
-            margin-top: 30px; 
-            display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
-            gap: 20px;
-        }
-
-        .history-panel {
-            background: rgba(255, 255, 255, 0.02);
-            backdrop-filter: blur(16px);
-            border: 1px solid var(--glass-border);
-            border-radius: 20px;
-            padding: 30px;
-            margin-top: 40px;
-        }
-
-        .history-panel h3 {
-            margin: 0;
-            font-size: 18px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .history-panel h3::before {
-            content: '';
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            background: var(--accent-success);
-            border-radius: 50%;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-        }
-
-        th {
-            padding: 14px;
-            color: var(--text-secondary);
-            font-size: 12px;
-            text-transform: uppercase;
-            text-align: left;
-            border-bottom: 1px solid var(--glass-border);
-        }
-
-        td {
-            padding: 16px 14px;
-            border-bottom: 1px solid rgba(255,255,255,0.03);
-        }
-
-        .tbl-username {
-            font-weight: 600;
-            color: #a5b4fc;
-        }
-
-        @media print {
-            body {
-                background: white !important;
-                color: #0f172a !important;
-                padding: 0 !important;
-            }
-            header, .search-area, .history-panel, .btn-interactive {
-                display: none !important;
-            }
-            .profile-card {
-                display: block !important;
-                background: white !important;
-                color: #0f172a !important;
-                box-shadow: none !important;
-                border: 1px solid #e2e8f0 !important;
-                padding: 20px !important;
-                margin: 0 !important;
-            }
-            .metric-card {
-                background: #f8fafc !important;
-                border: 1px solid #e2e8f0 !important;
-            }
-            .metric-num {
-                color: #0f172a !important;
-            }
-            .metric-label {
-                color: #475569 !important;
-            }
-            .archetype-badge {
-                background: #e2e8f0 !important;
-                color: #0f172a !important;
-                border: 1px solid #cbd5e1 !important;
-            }
-            #lblStrength { color: #15803d !important; }
-            #lblWeakness { color: #b91c1c !important; }
-            #listRecommendations li { color: #334155 !important; }
-        }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th, td { padding: 12px; border-bottom: 1px solid #2D3748; }
+        th { color: var(--text-muted); text-transform: uppercase; font-size: 0.85rem; }
+        .badge { background: #2D3748; padding: 4px 8px; border-radius: 4px; font-size: 0.85rem; }
+        .error-box { color: var(--error); border: 1px solid var(--error); padding: 15px; border-radius: 8px; background: rgba(239, 68, 68, 0.1); }
+        .loading { text-align: center; color: var(--text-muted); padding: 20px; }
+        .metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin: 20px 0; }
+        .metric-item { background: #0B0F19; padding: 15px; border-radius: 8px; text-align: center; border: 1px solid #2D3748; }
+        .metric-item p { margin: 0 0 5px 0; color: var(--text-muted); font-size: 0.9rem; }
+        .metric-item h3 { margin: 0; font-size: 1.5rem; color: #FFF; }
+        .profile-header { display: flex; align-items: center; gap: 20px; margin-bottom: 20px; }
+        .avatar { width: 70px; height: 70px; border-radius: 50%; border: 2px solid var(--accent); }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <header>
-        <h1>GitScope Profile Engine</h1>
-        <p>Enterprise Developer Metrics & Cache-Backed Behavioral Archetyping</p>
-    </header>
+    <h1>GitScope Profile Engine</h1>
+    <p class="subtitle">Enterprise Developer Metrics & Cache-Backed Behavioral Archetyping</p>
 
-    <div class="search-area">
-        <input type="text" id="usernameInput" placeholder="Analyze GitHub handler (e.g., torvalds, yyx990803)...">
-        <button onclick="analyzeProfile()">Analyze Target</button>
-    </div>
+    <form id="search-form" class="search-box">
+        <input type="text" id="username-input" placeholder="Enter GitHub Username..." required />
+        <button type="submit" id="submit-btn">Analyze Target</button>
+    </form>
 
-    <div class="profile-card" id="resultCard">
-        <div class="profile-meta" style="position: relative;">
-            <img src="" id="userAvatar" class="avatar" alt="Avatar">
-            <div class="profile-titles">
-                <h2 id="userDisplayName"></h2>
-                <div id="userArchetype" class="archetype-badge"></div>
-            </div>
-            
-            <button class="btn-interactive" onclick="exportPDFReport()" style="position: absolute; right: 0; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); font-size: 13px; padding: 10px 16px; height: auto;">
-                📥 Export PDF Report
-            </button>
-        </div>
-        
-        <div class="metric-grid">
-            <div class="metric-card"><div class="metric-num" id="statRepos">0</div><div class="metric-label">Repositories</div></div>
-            <div class="metric-card"><div class="metric-num" id="statStars" style="color: #fbbf24;">0</div><div class="metric-label">Total Stars ⭐</div></div>
-            <div class="metric-card"><div class="metric-num" id="statLang" style="color: #38bdf8;">None</div><div class="metric-label">Primary Stack 💻</div></div>
-            <div class="metric-card"><div class="metric-num" id="statTrend" style="color: #10b981;">0%</div><div class="metric-label">Commitment Trend 📈</div></div>
-        </div>
+    <div id="results-container"></div>
 
-        <div class="insights-grid">
-            <div class="metric-card" style="text-align: left;">
-                <h4 style="color: #818cf8; margin: 0 0 12px 0; text-transform: uppercase; font-size: 13px; letter-spacing: 1px;">📊 Career Diagnostic</h4>
-                <p style="font-size: 14px; margin: 0 0 8px 0;"><strong style="color: #10b981;">Strength:</strong> <span id="lblStrength">Calculating...</span></p>
-                <p style="font-size: 14px; margin: 0;"><strong style="color: #f43f5e;">Growth Area:</strong> <span id="lblWeakness">Calculating...</span></p>
-            </div>
-            <div class="metric-card" style="text-align: left;">
-                <h4 style="color: #fbbf24; margin: 0 0 12px 0; text-transform: uppercase; font-size: 13px; letter-spacing: 1px;">💡 Recommended Path Roadmap</h4>
-                <ul id="listRecommendations" style="font-size: 13px; margin: 0; padding-left: 18px; color: var(--text-secondary); line-height: 1.6;">
-                </ul>
-            </div>
-        </div>
-    </div>
-
-    <div class="history-panel">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 20px;">
-            <h3>Database Cached Matrix Index</h3>
-            
-            <div style="display: flex; gap: 10px; align-items: center;">
-                <label style="font-size: 13px; color: #38bdf8; display: flex; align-items: center; gap: 6px; margin-right: 10px; cursor: pointer; user-select: none;">
-                    <input type="checkbox" id="toggleGlobalSearch" onchange="loadHistory()" style="margin: 0; width: auto; cursor: pointer;"> 
-                    🌐 Search Global Network
-                </label>
-
-                <select id="filterArchetype" onchange="loadHistory()" style="background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); color: white; padding: 8px 12px; border-radius: 8px; font-size: 13px; outline: none; cursor: pointer;">
-                    <option value="">All Archetypes</option>
-                    <option value="Open Source Legend">Open Source Legend</option>
-                    <option value="Active Creator">Active Creator</option>
-                    <option value="Influential Developer">Influential Developer</option>
-                    <option value="Casual Developer">Casual Developer</option>
-                    <option value="Getting Started">Getting Started</option>
-                    <option value="Passive Lurker">Passive Lurker</option>
-                </select>
-
-                <select id="sortByMetric" onchange="loadHistory()" style="background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); color: white; padding: 8px 12px; border-radius: 8px; font-size: 13px; outline: none; cursor: pointer;">
-                    <option value="date">Sort By: Recent Analysis</option>
-                    <option value="followers">Sort By: Followers Count</option>
-                    <option value="repos">Sort By: Repositories Volume</option>
-                    <option value="stars">Sort By: Total Stars ⭐</option>
-                    <option value="commitment">Sort By: Commitment Score 📈</option>
-                </select>
-            </div>
-        </div>
-
+    <div class="table-container">
+        <h3>📊 Database Cached Matrix Index</h3>
         <table>
             <thead>
                 <tr>
                     <th>Username</th>
-                    <th>Public Repos</th>
+                    <th>Primary Stack</th>
+                    <th>Repositories</th>
                     <th>Followers</th>
                     <th>Calculated Analytics Tag</th>
                 </tr>
             </thead>
-            <tbody id="historyTableBody"></tbody>
+            <tbody id="profiles-table-body">
+                <tr><td colspan="5" class="loading">Loading connection logs...</td></tr>
+            </tbody>
         </table>
     </div>
 </div>
 
 <script>
-    // FIXED: Shifted from absolute Render link to relative Vercel app path 
-    const API_BASE = "/api";
+    // PRODUCTION CONFIGURATION: Update this string with your live deployed Render API service address
+    const API_BASE_URL = 'https://your-backend-service-name.onrender.com/api';
 
-    function getBadgeClass(type) {
-        if (!type) return 'badge-lurker';
-        const normalize = type.toLowerCase();
+    document.addEventListener('DOMContentLoaded', () => {
+        fetchSavedProfiles();
+
+        const searchForm = document.getElementById('search-form');
+        if (searchForm) {
+            searchForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const usernameInput = document.getElementById('username-input');
+                if (usernameInput) {
+                    const username = usernameInput.value.trim();
+                    if (username) {
+                        await analyzeProfile(username);
+                    }
+                }
+            });
+        }
+    });
+
+    async function analyzeProfile(username) {
+        const submitButton = document.getElementById('submit-btn');
+        const resultContainer = document.getElementById('results-container');
         
-        if (normalize.includes('legend')) return 'badge-legend';
-        if (normalize.includes('creator')) return 'badge-creator';
-        if (normalize.includes('influential') || normalize.includes('influencer')) return 'badge-influencer';
-        if (normalize.includes('casual')) return 'badge-casual';
-        if (normalize.includes('started')) return 'badge-started';
-        return 'badge-lurker';
-    }
-
-    async function analyzeProfile() {
-        const username = document.getElementById('usernameInput').value.trim();
-        if (!username) return alert("Please enter a username!");
+        if (submitButton) submitButton.disabled = true;
+        if (resultContainer) resultContainer.innerHTML = '<p class="loading">Analyzing profile matrix via GitHub API...</p>';
 
         try {
-            const res = await fetch(`${API_BASE}/profiles/${username}`, { method: 'POST' });
-            const result = await res.json();
-            if (!res.ok) throw new Error(result.error || "System Ingestion Failure");
-
-            const rawData = result.insights || result.data;
-            
-            document.getElementById('userAvatar').src = rawData.avatar || rawData.avatar_url || "";
-            document.getElementById('userDisplayName').innerText = rawData.name || rawData.username || username;
-            
-            const arch = rawData.developer_archetype || rawData.user_type || "Passive Lurker";
-            const archEl = document.getElementById('userArchetype');
-            archEl.innerText = arch;
-            archEl.className = `archetype-badge ${getBadgeClass(arch)}`;
-
-            document.getElementById('statRepos').innerText = rawData.public_repositories !== undefined ? rawData.public_repositories : (rawData.public_repos !== undefined ? rawData.public_repos : 0);
-            document.getElementById('statStars').innerText = rawData.total_stars_accumulated !== undefined ? rawData.total_stars_accumulated : (rawData.total_stars !== undefined ? rawData.total_stars : 0);
-            document.getElementById('statLang').innerText = rawData.primary_language || "Unknown";
-            
-            const trend = rawData.commitment_score !== undefined ? rawData.commitment_score : 0;
-            document.getElementById('statTrend').innerText = trend + "%";
-
-            if (rawData.career_insights) {
-                document.getElementById('lblStrength').innerText = rawData.career_insights.strength;
-                document.getElementById('lblWeakness').innerText = rawData.career_insights.weakness;
-            } else if (rawData.commitment_score !== undefined) {
-                const dbStrength = rawData.commitment_score > 50 
-                    ? "High consistency. The target actively maintains code and pushes changes regularly." 
-                    : "Strong structural setup. The target acts as a reliable repository vault manager.";
-                    
-                const currentRepos = rawData.public_repos || 0;
-                const dbWeakness = currentRepos < 10 
-                    ? "Low repository footprint. Consider publishing more proof-of-work project folders publically." 
-                    : "Documentation focus. Target can improve project reach by generating better README layouts.";
-
-                document.getElementById('lblStrength').innerText = dbStrength;
-                document.getElementById('lblWeakness').innerText = dbWeakness;
-            } else {
-                document.getElementById('lblStrength').innerText = "Maintains a reliable repository framework strategy.";
-                document.getElementById('lblWeakness').innerText = "Focus on community engagement and detailed documentation.";
-            }
-
-            const recList = document.getElementById('listRecommendations');
-            recList.innerHTML = "";
-            
-            let recs = rawData.recommendations;
-            if (!recs) {
-                const lang = rawData.primary_language || "Unknown";
-                if (lang === 'JavaScript' || lang === 'TypeScript') {
-                    recs = [
-                        "Build a high-performance Next.js full-stack application utilizing server actions.",
-                        "Design a real-time collaborative whiteboard using WebSockets and Socket.io.",
-                        "Create a custom lightweight state management library from scratch."
-                    ];
-                } else if (lang === 'Python') {
-                    recs = [
-                        "Develop a custom REST API using FastAPI and back it with PostgreSQL.",
-                        "Build an automated web scraping pipeline with BeautifulSoup and Celery orchestration.",
-                        "Train and deploy a fine-tuned text classification model using Hugging Face."
-                    ];
-                } else {
-                    recs = [
-                        "Build an advanced decentralized authentication system with JWT tokens.",
-                        "Create an open-source command-line tool (CLI) to automate environment configurations.",
-                        "Develop a full-stack dashboard parsing public infrastructure open-data metrics."
-                    ];
-                }
-            }
-
-            recs.forEach(rec => {
-                recList.innerHTML += `<li>${rec}</li>`;
+            const response = await fetch(`${API_BASE_URL}/profiles/${username}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
             });
 
-            document.getElementById('resultCard').style.display = "block";
-            loadHistory();
-        } catch (err) {
-            alert("API Notice: " + err.message);
-        }
-    }
+            const data = await response.json();
 
-    async function loadHistory() {
-        try {
-            const archetype = document.getElementById('filterArchetype').value;
-            const sortBy = document.getElementById('sortByMetric').value;
-            const isGlobal = document.getElementById('toggleGlobalSearch').checked;
-
-            let url = `${API_BASE}/profiles?`;
-            if (archetype) url += `archetype=${encodeURIComponent(archetype)}&`;
-            if (sortBy) url += `sortBy=${encodeURIComponent(sortBy)}&`;
-            if (isGlobal) url += `globalDiscover=true`;
-
-            const res = await fetch(url);
-            const data = await res.json();
-            const tbody = document.getElementById('historyTableBody');
-            tbody.innerHTML = "";
-
-            if (data && data.profiles && data.profiles.length > 0) {
-                data.profiles.forEach(p => {
-                    const isLive = p.source === "Live GitHub Network";
-                    const sourceBadge = isLive 
-                        ? `<span style="font-size:10px; color:#38bdf8; background:rgba(56,189,248,0.1); padding:2px 6px; border-radius:4px; margin-left:8px;">Global</span>` 
-                        : '';
-
-                    const row = `
-                    <tr class="history-row" data-username="${p.username}" data-live="${isLive}" style="cursor: ${isLive ? 'pointer' : 'default'}">
-                        <td class="tbl-username" style="text-decoration: ${isLive ? 'underline' : 'none'};">
-                            ${p.username} ${sourceBadge}
-                        </td>
-                        <td style="font-family: monospace; color: #cbd5e1;">${p.public_repos} (${p.primary_language || 'N/A'})</td>
-                        <td style="font-family: monospace; color: #cbd5e1;">${p.followers}</td>
-                        <td><span class="archetype-badge ${getBadgeClass(p.user_type)}" style="font-size: 11px; padding: 4px 10px;">${p.user_type}</span></td>
-                    </tr>`;
-                    
-                    tbody.insertAdjacentHTML('beforeend', row);
-                });
-
-                document.querySelectorAll('.history-row').forEach(row => {
-                    row.addEventListener('click', function() {
-                        if (this.getAttribute('data-live') === 'true') {
-                            fillAndAnalyze(this.getAttribute('data-username'));
-                        }
-                    });
-                });
-
-            } else {
-                tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: #94a3b8; padding: 40px; font-size: 14px;">No profile matrix telemetry matches this filter profile selection.</td></tr>`;
+            if (!response.ok) {
+                throw new Error(data.details || data.error || 'Failed to process metrics.');
             }
+
+            renderInsights(data.insights);
+            fetchSavedProfiles(); 
         } catch (err) {
-            console.error("Matrix Log Ingestion Error:", err);
-            document.getElementById('historyTableBody').innerHTML = `<tr><td colspan="4" style="text-align: center; color: #f43f5e; padding: 20px;">Error parsing database telemetry entries.</td></tr>`;
+            console.error("Frontend Ingestion Fault:", err);
+            if (resultContainer) {
+                resultContainer.innerHTML = `
+                    <div class="error-box">
+                        <p><strong>❌ Processing Error:</strong> ${err.message}</p>
+                    </div>
+                `;
+            }
+        } finally {
+            if (submitButton) submitButton.disabled = false;
         }
     }
 
-    function fillAndAnalyze(username) {
-        document.getElementById('usernameInput').value = username;
-        analyzeProfile();
+    async function fetchSavedProfiles() {
+        const tableBody = document.getElementById('profiles-table-body');
+        if (!tableBody) return;
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/profiles`);
+            const data = await response.json();
+
+            if (!response.ok) throw new Error(data.error || 'Failed to sync database logs.');
+
+            tableBody.innerHTML = '';
+
+            if (!data.profiles || data.profiles.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:gray;">No records inside Neon database instance.</td></tr>';
+                return;
+            }
+
+            data.profiles.forEach(p => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><strong>${p.username}</strong></td>
+                    <td><span class="badge">${p.primary_language}</span></td>
+                    <td>${p.public_repos}</td>
+                    <td>${p.followers}</td>
+                    <td><span class="badge" style="background-color:#1E293B; border:1px solid var(--accent);">${p.user_type}</span></td>
+                `;
+                tableBody.appendChild(row);
+            });
+        } catch (err) {
+            console.error("Matrix Refresh Error:", err);
+            tableBody.innerHTML = `<tr><td colspan="5" style="color:var(--error); text-align:center;">Database connection unverified: ${err.message}</td></tr>`;
+        }
     }
 
-    function exportPDFReport() {
-        const currentName = document.getElementById('userDisplayName').innerText || "Developer";
-        const originalTitle = document.title;
-        
-        document.title = `GitScope_Report_${currentName.replace(/\s+/g, '_')}`;
-        window.print();
-        document.title = originalTitle;
-    }
+    function renderInsights(insights) {
+        const resultContainer = document.getElementById('results-container');
+        if (!resultContainer) return;
 
-    document.addEventListener("DOMContentLoaded", loadHistory);
+        resultContainer.innerHTML = `
+            <div class="card">
+                <div class="profile-header">
+                    <img src="${insights.avatar || 'https://via.placeholder.com/150'}" alt="Avatar" class="avatar">
+                    <div>
+                        <h2 style="margin:0;">${insights.name || insights.username}</h2>
+                        <p style="margin:5px 0 0 0; color:var(--text-muted)">Archetype: <strong style="color:white">${insights.developer_archetype}</strong></p>
+                    </div>
+                </div>
+                
+                <div class="metrics-grid">
+                    <div class="metric-item"><p>Repositories</p><h3>${insights.public_repositories}</h3></div>
+                    <div class="metric-item"><p>Followers</p><h3>${insights.followers}</h3></div>
+                    <div class="metric-item"><p>Primary Stack</p><h3>${insights.primary_language}</h3></div>
+                    <div class="metric-item"><p>Commitment</p><h3>${insights.commitment_score}%</h3></div>
+                </div>
+
+                <div style="margin-top:20px;">
+                    <h4 style="margin:0 0 5px 0; color:var(--accent)">🎯 Behavioral Assessment</h4>
+                    <p style="margin:0 0 10px 0;"><strong>Core Strength:</strong> ${insights.career_insights.strength}</p>
+                    <p style="margin:0;"><strong>Growth Area:</strong> ${insights.career_insights.weakness}</p>
+                </div>
+
+                <div style="margin-top:20px;">
+                    <h4 style="margin:0 0 5px 0; color:var(--accent)">🚀 Recommended Roadmap Projects</h4>
+                    <ul style="margin:5px 0 0 0; padding-left:20px;">
+                        ${insights.recommendations.map(rec => `<li>${rec}</li>`).join('')}
+                    </ul>
+                </div>
+            </div>
+        `;
+    }
 </script>
 </body>
 </html>
