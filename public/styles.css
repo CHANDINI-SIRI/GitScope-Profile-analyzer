@@ -1,0 +1,268 @@
+/* --- Global Reset & Creamy Soft Sun Canvas --- */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+:root {
+    /* Soft blended creamy sun background */
+    --bg-gradient: radial-gradient(circle at 80% 20%, #fffbf2 0%, #fdf5e2 40%, #f7f1df 100%);
+    --card-bg: #ffffff;
+    --input-bg: #fdfbf7;
+    --border-color: #eaddc7;
+    
+    /* Elegant High-Contrast UI Colors */
+    --text-primary: #231f1a;
+    --text-secondary: #70695c;
+    --accent-orange: #f47c00;          /* Distinct Sun Orange */
+    --accent-orange-hover: #d96e00;
+    --accent-green: #1b874b;
+    --accent-blue: #1473bc;
+}
+
+body {
+    background: var(--bg-gradient);
+    color: var(--text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    min-height: 100vh;
+    padding: 40px 20px;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* --- Typography / Header --- */
+.header {
+    text-align: center;
+    margin-bottom: 35px;
+}
+
+.header h1 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    letter-spacing: -0.5px;
+}
+
+.subtitle {
+    color: var(--text-secondary);
+    font-size: 1rem;
+    margin-top: 6px;
+    font-weight: 500;
+}
+
+/* --- CRISP ELEVATED WARM COMPONENT BASE --- */
+.main-card, .index-section, .search-box-input {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    box-shadow: 0 12px 32px -4px rgba(138, 125, 98, 0.08), 
+                0 4px 12px -2px rgba(138, 125, 98, 0.03);
+}
+
+/* --- Search Controls --- */
+.search-row {
+    margin-bottom: 30px;
+}
+
+.search-box-input {
+    background: var(--input-bg);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    transition: all 0.3s ease;
+}
+
+.search-box-input::placeholder {
+    color: #a0988a;
+}
+
+.search-box-input:focus {
+    background: #ffffff;
+    border-color: var(--accent-orange);
+    box-shadow: 0 0 0 4px rgba(244, 124, 0, 0.15);
+}
+
+/* Vibrant Action Buttons */
+button {
+    background: var(--accent-orange);
+    color: #ffffff;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 14px rgba(244, 124, 0, 0.25);
+}
+
+button:hover {
+    background: var(--accent-orange-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(244, 124, 0, 0.35);
+}
+
+button:active {
+    transform: translateY(1px);
+}
+
+#export-duel-pdf-btn {
+    background: #ffffff !important;
+    color: var(--accent-orange) !important;
+    border: 1px solid rgba(244, 124, 0, 0.3) !important;
+    box-shadow: 0 4px 12px rgba(244, 124, 0, 0.05) !important;
+}
+
+#export-duel-pdf-btn:hover {
+    background: #fff7ed !important;
+    border-color: var(--accent-orange) !important;
+}
+
+/* --- Main Comparison Cards --- */
+.main-card {
+    padding: 24px;
+    transition: transform 0.3s ease;
+}
+
+.main-card:hover {
+    transform: translateY(-4px);
+}
+
+.profile-header h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.divider {
+    border: 0;
+    height: 1px;
+    background: var(--border-color);
+    margin: 20px 0;
+}
+
+/* Mini Statistics Containers */
+.mini-box {
+    background: var(--input-bg) !important;
+    border: 1px solid var(--border-color) !important;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.01);
+    transition: background 0.2s;
+}
+
+.mini-box:hover {
+    background: #ffffff !important;
+    border-color: var(--accent-orange) !important;
+}
+
+.mini-box .val {
+    color: var(--text-primary);
+}
+
+.mini-box .lbl {
+    color: var(--text-secondary);
+    font-weight: 700;
+}
+
+.highlight-blue { color: var(--accent-blue) !important; }
+.highlight-green { color: var(--accent-green) !important; }
+
+/* Diagnostic Box Component */
+.diagnostic-panel {
+    background: var(--input-bg) !important;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    border-left: 4px solid var(--accent-orange) !important;
+    padding: 12px;
+}
+
+.diagnostic-panel h4 {
+    color: var(--accent-orange) !important;
+    font-weight: 700 !important;
+}
+
+.diagnostic-panel p {
+    color: var(--text-primary);
+}
+
+/* Stack Chart Wrapper Background Overrides */
+.comparison-workspace main > div:last-of-type {
+    background: var(--input-bg) !important;
+    border: 1px solid var(--border-color) !important;
+}
+
+/* --- History Logs Matrix Table --- */
+.index-section {
+    padding: 24px;
+}
+
+.index-title h3 {
+    color: var(--text-primary);
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.status-indicator {
+    background: var(--accent-green);
+    box-shadow: 0 0 12px var(--accent-green);
+}
+
+.matrix-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+    text-align: left;
+}
+
+.matrix-table th {
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 12px;
+    border-bottom: 2px solid var(--border-color);
+    font-weight: 700;
+}
+
+.matrix-table td {
+    padding: 14px 12px;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-primary);
+    font-size: 0.9rem;
+}
+
+.matrix-table tr:last-child td {
+    border-bottom: none;
+}
+
+.matrix-table tr:hover td {
+    background: #fff7ed;
+}
+
+.user-cell {
+    font-weight: 600;
+    color: var(--accent-orange);
+}
+
+.sub-text {
+    color: var(--text-secondary);
+}
+
+/* --- Loaders and Messaging --- */
+#loading {
+    color: var(--accent-orange);
+    font-weight: 600;
+    text-align: center;
+    margin: 20px 0;
+}
+
+.error-box {
+    background: #fff5f5;
+    border: 1px solid #fecaca;
+    color: #dc2626;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.hidden { display: none !important; }

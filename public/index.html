@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitScope Profile Engine - Duel Mode</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        /* Modern Matrix UI Stylesheet Base */
+        :root {
+            --bg-main: #111827;
+            --card-bg: #1f2937;
+            --text-main: #f9fafb;
+            --text-secondary: #9ca3af;
+            --border-color: #374151;
+            --accent-orange: #f97316;
+            --input-bg: #374151;
+        }
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            font-family: system-ui, -apple-system, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { text-align: center; margin-bottom: 30px; }
+        .subtitle { color: var(--text-secondary); }
+        
+        .badge { font-size: 0.75rem; font-weight: 700; padding: 4px 10px; border-radius: 99px; display: inline-block; }
+        .badge.warrior { background: #fee2e2; color: #ef4444; }
+        .badge.evangelist { background: #d1fae5; color: #10b981; }
+        .badge.architect { background: #fef3c7; color: #d97706; }
+        .badge.developer { background: #e0e7ff; color: #4f46e5; }
+        .badge.passive { background: #374151; color: var(--text-secondary); }
+
+        .comparison-workspace { display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 25px; margin-bottom: 30px; }
+        .main-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 24px; }
+        .search-row { display: grid; grid-template-columns: 1fr 1fr auto; gap: 15px; margin-bottom: 25px; }
+        .search-box-input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--input-bg); color: #fff; box-sizing: border-box; }
+        button { background: var(--accent-orange); color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; }
+        button:hover { opacity: 0.9; }
+        
+        .mini-metrics { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 15px; }
+        .mini-box { background: var(--input-bg); padding: 12px; border-radius: 10px; text-align: center; }
+        .mini-box .val { font-size: 1.4rem; font-weight: 700; display: block; }
+        .mini-box .lbl { font-size: 0.7rem; color: var(--text-secondary); }
+        
+        .diagnostic-panel { background: #111827; padding: 12px; border-radius: 8px; border-left: 4px solid var(--accent-orange); }
+        .chart-wrapper-mini { position: relative; width: 130px; height: 130px; margin: 0 auto; }
+        .hidden { display: none !important; }
+        .error-box { background: #fef2f2; color: #b91c1c; padding: 12px; border-radius: 8px; margin-bottom: 15px; }
+        .spinner { text-align: center; color: var(--accent-orange); margin: 15px 0; font-weight: bold; }
+        
+        .matrix-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        .matrix-table th, .matrix-table td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border-color); }
+        .matrix-table th { color: var(--text-secondary); font-size: 0.85rem; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>GitScope Profile Engine</h1>
+            <p class="subtitle">Cross-Profile Matrix Comparison & Developer Asset Duel Board</p>
+        </header>
+
+        <div class="search-row">
+            <input type="text" id="targetA-input" class="search-box-input" placeholder="Primary Candidate (Target A)..." value="gaearon">
+            <input type="text" id="targetB-input" class="search-box-input" placeholder="Comparison Candidate (Target B)..." value="chandinni">
+            <button id="duel-btn">Cross-Analyze Targets</button>
+        </div>
+
+        <div id="error-msg" class="error-box hidden"></div>
+        <div id="loading" class="spinner hidden">Syncing parallel developer matrices...</div>
+
+        <div id="export-container" style="display: flex; justify-content: flex-end; margin-bottom: 15px;">
+            <button id="export-duel-pdf-btn">📩 Export Report Matrix</button>
+        </div>
+
+        <div class="comparison-workspace">
+            <main id="profile-card-A" class="main-card">
+                <h2><span id="res-username-A">Target Alpha</span> <span id="res-tag-A" class="badge passive">WAITING</span></h2>
+                <hr style="border-color: var(--border-color); margin: 15px 0;">
+                <div class="mini-metrics">
+                    <div class="mini-box"><span class="val" id="res-repos-A">0</span><span class="lbl">REPOSITORIES</span></div>
+                    <div class="mini-box"><span class="val" id="res-stars-A">0</span><span class="lbl">TOTAL STARS</span></div>
+                    <div class="mini-box"><span class="val" id="res-stack-A">-</span><span class="lbl">PRIMARY STACK</span></div>
+                    <div class="mini-box"><span class="val" id="res-trend-A">0</span><span class="lbl">FOLLOWERS</span></div>
+                </div>
+                <div class="diagnostic-panel">
+                    <p style="margin: 2px 0; font-size: 0.85rem;"><strong>AI Strength Analysis:</strong> <span id="res-strength-A">Await trace data...</span></p>
+                    <p style="margin: 2px 0; font-size: 0.85rem;"><strong>AI Growth Engineering:</strong> <span id="res-growth-A">Await trace data...</span></p>
+                </div>
+                <div style="text-align:center; margin-top:15px;">
+                    <div class="chart-wrapper-mini"><canvas id="chart-A"></canvas></div>
+                </div>
+            </main>
+
+            <main id="profile-card-B" class="main-card">
+                <h2><span id="res-username-B">Target Beta</span> <span id="res-tag-B" class="badge passive">WAITING</span></h2>
+                <hr style="border-color: var(--border-color); margin: 15px 0;">
+                <div class="mini-metrics">
+                    <div class="mini-box"><span class="val" id="res-repos-B">0</span><span class="lbl">REPOSITORIES</span></div>
+                    <div class="mini-box"><span class="val" id="res-stars-B">0</span><span class="lbl">TOTAL STARS</span></div>
+                    <div class="mini-box"><span class="val" id="res-stack-B">-</span><span class="lbl">PRIMARY STACK</span></div>
+                    <div class="mini-box"><span class="val" id="res-trend-B">0</span><span class="lbl">FOLLOWERS</span></div>
+                </div>
+                <div class="diagnostic-panel">
+                    <p style="margin: 2px 0; font-size: 0.85rem;"><strong>AI Strength Analysis:</strong> <span id="res-strength-B">Await trace data...</span></p>
+                    <p style="margin: 2px 0; font-size: 0.85rem;"><strong>AI Growth Engineering:</strong> <span id="res-growth-B">Await trace data...</span></p>
+                </div>
+                <div style="text-align:center; margin-top:15px;">
+                    <div class="chart-wrapper-mini"><canvas id="chart-B"></canvas></div>
+                </div>
+            </main>
+        </div>
+
+        <section class="main-card">
+            <h3>Session Comparison History Index</h3>
+            <table class="matrix-table">
+                <thead>
+                    <tr>
+                        <th>USERNAME</th>
+                        <th>PUBLIC REPOS</th>
+                        <th>FOLLOWERS</th>
+                        <th>ANALYTICS TAG</th>
+                    </tr>
+                </thead>
+                <tbody id="table-body"></tbody>
+            </table>
+        </section>
+    </div>
+
+    <script>
+        let chartInstanceA = null; 
+        let chartInstanceB = null; 
+        let localHistoryCache = []; 
+
+        // Central global references for network stream lifecycle aborts
+        let abortControllerA = null;
+        let abortControllerB = null;
+
+        function determineArchetype(repos, followers) { 
+            if (followers >= 15) return { label: "OPEN SOURCE EVANGELIST", class: "badge evangelist" }; 
+            if (repos >= 25) return { label: "CODE WARRIOR", class: "badge warrior" }; 
+            if (repos > 0 && repos <= 12) return { label: "GREEN WALL ARCHITECT", class: "badge architect" }; 
+            return { label: "CASUAL DEVELOPER", class: "badge developer" }; 
+        } 
+
+        // =========================================================================
+        // 4. MOCK AI ANALYTICAL ENGINE MATRIX (START)
+        // =========================================================================
+        function executeAIEngineSynthesis(repos, stars, followers, stack, bio) {
+            let strengthScore = (stars * 3) + (followers * 2) + (repos * 0.5);
+            let dynamicStrength = "";
+            let dynamicGrowth = "";
+
+            if (strengthScore > 150) {
+                dynamicStrength = `High-authority profile demonstrating robust community validation in ${stack}. Dominant architectural footprint with clear downstream impact.`;
+                dynamicGrowth = `Optimize baseline velocity. Focus on high-leverage open-source system libraries over fragmented utility wrappers.`;
+            } else if (repos > 15) {
+                dynamicStrength = `Dense contribution velocity with high production endurance. Demonstrates strong baseline capacity for continuous deployment pipelines.`;
+                dynamicGrowth = `Encourage external design iteration. Elevate community abstraction rates to transition output volume into community-validated assets.`;
+            } else {
+                dynamicStrength = `Targeted ecosystem implementation focusing closely on foundational ${stack} projects. Clean baseline footprint.`;
+                dynamicGrowth = `Accelerate codebase exposure. Expand target scope to include multi-repository design strategies and systemic architecture scaling.`;
+            }
+
+            if (bio && bio.trim().length > 0) {
+                dynamicStrength += ` Integrated signature domain context: "${bio.substring(0, 30)}..."`;
+            }
+
+            return { strength: dynamicStrength, growth: dynamicGrowth };
+        }
+        // =========================================================================
+        // MOCK AI ANALYTICAL ENGINE MATRIX (END)
+        // =========================================================================
+
+        function createDoughnut(canvasId, topRepos, side) { 
+            const ctx = document.getElementById(canvasId).getContext('2d'); 
+            let oldInstance = side === 'A' ? chartInstanceA : chartInstanceB; 
+            if (oldInstance) oldInstance.destroy(); 
+
+            if (!topRepos || topRepos.length === 0) { 
+                const emptyChart = new Chart(ctx, { 
+                    type: 'doughnut', 
+                    data: { labels: ['None'], datasets: [{ data: [1], backgroundColor: ['#374151'] }] }, 
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, cutout: '70%' } 
+                }); 
+                if (side === 'A') chartInstanceA = emptyChart; else chartInstanceB = emptyChart; 
+                return; 
+            } 
+
+            const langCounts = {}; 
+            topRepos.forEach(r => { const l = r.language || 'Other'; langCounts[l] = (langCounts[l] || 0) + 1; }); 
+
+            const newChart = new Chart(ctx, { 
+                type: 'doughnut', 
+                data: { 
+                    labels: Object.keys(langCounts), 
+                    datasets: [{ data: Object.values(langCounts), backgroundColor: ['#f97316', '#3b82f6', '#10b981', '#6366f1', '#9ca3af'], borderWidth: 0 }] 
+                }, 
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, cutout: '70%' } 
+            }); 
+            if (side === 'A') chartInstanceA = newChart; else chartInstanceB = newChart; 
+        } 
+
+        function renderHistoryTable() { 
+            const tbody = document.getElementById('table-body'); 
+            tbody.innerHTML = ''; 
+            if (localHistoryCache.length === 0) { 
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-secondary);">No active metrics logged.</td></tr>`; 
+                return; 
+            } 
+            localHistoryCache.forEach(p => { 
+                const arch = determineArchetype(p.public_repos, p.followers); 
+                tbody.innerHTML += `
+                    <tr>
+                        <td>@${p.username}</td>
+                        <td>${p.public_repos} (${p.primary_sub_stack})</td>
+                        <td>${p.followers}</td>
+                        <td><span class="${arch.class}">${arch.label}</span></td>
+                    </tr>`; 
+            }); 
+        } 
+
+        // Upgraded asynchronous delivery handler mapping an Abort Signal constraint
+        async function fetchCandidateData(username, abortSignal) { 
+            if (!username) return null; 
+
+            // SMART CACHING LAYER
+            const cacheKey = `gitscope_cache_${username.toLowerCase()}`;
+            const cachedItem = localStorage.getItem(cacheKey);
+            
+            if (cachedItem) {
+                const parsedCache = JSON.parse(cachedItem);
+                const cacheDuration = Date.now() - parsedCache.timestamp;
+                const tenMinutes = 10 * 60 * 1000; 
+                
+                if (cacheDuration < tenMinutes) {
+                    console.log(`%c[Cache Hit] Serving metrics for @${username} from memory.`, "color: #10b981; font-weight: bold;");
+                    
+                    if (!localHistoryCache.some(x => x.username.toLowerCase() === parsedCache.data.username.toLowerCase())) { 
+                        localHistoryCache.push(parsedCache.data); 
+                    }
+                    return parsedCache.data;
+                }
+            }
+
+            // Bind the Abort Signal down into the active network async fetch streams
+            const userRes = await fetch(`https://api.github.com/users/${username}`, { signal: abortSignal }); 
+            if (!userRes.ok) throw new Error(`User "${username}" not found.`); 
+            const userData = await userRes.json(); 
+
+            const repoRes = await fetch(`https://api.github.com/users/${username}/repos?per_page=30&sort=updated`, { signal: abortSignal }); 
+            let topRepos = []; 
+            if (repoRes.ok) { 
+                topRepos = await repoRes.json(); 
+            } 
+
+            // UPGRADED LANGUAGE RANKING ALGORITHM
+            const languageMetrics = {};
+            topRepos.forEach(r => {
+                if (!r.language) return;
+                const lang = r.language;
+                if (!languageMetrics[lang]) {
+                    languageMetrics[lang] = { count: 0, starWeight: 0, recencyBonus: 0 };
+                }
+                languageMetrics[lang].count += 1;
+                languageMetrics[lang].starWeight += (r.stargazers_count || 0) * 2;
+                
+                const weeksSinceUpdate = (Date.now() - new Date(r.updated_at).getTime()) / (1000 * 60 * 60 * 24 * 7);
+                if (weeksSinceUpdate <= 4) {
+                    languageMetrics[lang].recencyBonus += 5; 
+                } else if (weeksSinceUpdate <= 12) {
+                    languageMetrics[lang].recencyBonus += 2; 
+                }
+            });
+
+            let dominantLanguage = 'JavaScript';
+            let highestCompositeScore = -1;
+            Object.keys(languageMetrics).forEach(lang => {
+                const metrics = languageMetrics[lang];
+                const compositeScore = (metrics.count * 3) + metrics.starWeight + metrics.recencyBonus;
+                if (compositeScore > highestCompositeScore) {
+                    highestCompositeScore = compositeScore;
+                    dominantLanguage = lang;
+                }
+            });
+
+            const totalStars = topRepos.reduce((acc, r) => acc + r.stargazers_count, 0); 
+            
+            // EXECUTE DYNAMIC AI INSIGHTS GENERATION LAYER
+            const aiInsights = executeAIEngineSynthesis(userData.public_repos, totalStars, userData.followers, dominantLanguage, userData.bio);
+
+            const structuredProfile = { 
+                username: userData.login, 
+                public_repos: userData.public_repos, 
+                followers: userData.followers, 
+                total_stars: totalStars || userData.followers * 2, 
+                primary_sub_stack: dominantLanguage, 
+                top_repositories: topRepos, 
+                diagnostics: { strength: aiInsights.strength, growth: aiInsights.growth } 
+            }; 
+
+            const cachePayload = { timestamp: Date.now(), data: structuredProfile };
+            localStorage.setItem(cacheKey, JSON.stringify(cachePayload));
+
+            if (!localHistoryCache.some(x => x.username.toLowerCase() === structuredProfile.username.toLowerCase())) { 
+                localHistoryCache.push(structuredProfile); 
+            } 
+            return structuredProfile; 
+        }
+
+        function renderProfileCard(data, side) { 
+            document.getElementById(`res-username-${side}`).innerText = data.username; 
+            document.getElementById(`res-repos-${side}`).innerText = data.public_repos; 
+            document.getElementById(`res-stars-${side}`).innerText = data.total_stars; 
+            document.getElementById(`res-stack-${side}`).innerText = data.primary_sub_stack; 
+            document.getElementById(`res-trend-${side}`).innerText = data.followers; 
+            document.getElementById(`res-strength-${side}`).innerText = data.diagnostics.strength; 
+            document.getElementById(`res-growth-${side}`).innerText = data.diagnostics.growth; 
+            const arch = determineArchetype(data.public_repos, data.followers); 
+            document.getElementById(`res-tag-${side}`).className = arch.class; 
+            document.getElementById(`res-tag-${side}`).innerText = arch.label; 
+            createDoughnut(`chart-${side}`, data.top_repositories, side); 
+        } 
+
+        function resetProfileCard(side, placeholderText) { 
+            document.getElementById(`res-username-${side}`).innerText = placeholderText; 
+            document.getElementById(`res-repos-${side}`).innerText = "0"; 
+            document.getElementById(`res-stars-${side}`).innerText = "0"; 
+            document.getElementById(`res-stack-${side}`).innerText = "-"; 
+            document.getElementById(`res-trend-${side}`).innerText = "0"; 
+            document.getElementById(`res-strength-${side}`).innerText = "Await trace data..."; 
+            document.getElementById(`res-growth-${side}`).innerText = "Await trace data..."; 
+            document.getElementById(`res-tag-${side}`).className = "badge passive"; 
+            document.getElementById(`res-tag-${side}`).innerText = "FAILED"; 
+            createDoughnut(`chart-${side}`, [], side); 
+        } 
+
+        document.getElementById('duel-btn').addEventListener('click', async () => { 
+            const userA = document.getElementById('targetA-input').value.trim(); 
+            const userB = document.getElementById('targetB-input').value.trim(); 
+            const loading = document.getElementById('loading'); 
+            const errorBox = document.getElementById('error-msg'); 
+
+            if (!userA || !userB) return alert('Provide two separate profile handles.'); 
+
+            errorBox.classList.add('hidden'); 
+            errorBox.innerText = ""; 
+            loading.classList.remove('hidden'); 
+
+            // =========================================================================
+            // 3. ASYNCHRONOUS LIFE CYCLE TRACKING & ABORT PROTECTION (START)
+            // =========================================================================
+            if (abortControllerA) abortControllerA.abort();
+            if (abortControllerB) abortControllerB.abort();
+
+            abortControllerA = new AbortController();
+            abortControllerB = new AbortController();
+            // =========================================================================
+            // ASYNCHRONOUS LIFE CYCLE TRACKING & ABORT PROTECTION (END)
+            // =========================================================================
+
+            let errors = []; 
+
+            // Wrap executions separately so an error or an abort on one card doesn't destroy the other side's stream
+            const promiseA = (async () => {
+                try { 
+                    const dataA = await fetchCandidateData(userA, abortControllerA.signal); 
+                    renderProfileCard(dataA, 'A'); 
+                } catch (err) { 
+                    if (err.name !== 'AbortError') {
+                        resetProfileCard('A', 'Target Alpha (Not Found)'); 
+                        errors.push(`Target A (${userA}): ${err.message}`); 
+                    }
+                } 
+            })();
+
+            const promiseB = (async () => {
+                try { 
+                    const dataB = await fetchCandidateData(userB, abortControllerB.signal); 
+                    renderProfileCard(dataB, 'B'); 
+                } catch (err) { 
+                    if (err.name !== 'AbortError') {
+                        resetProfileCard('B', 'Target Beta (Not Found)'); 
+                        errors.push(`Target B (${userB}): ${err.message}`); 
+                    }
+                } 
+            })();
+
+            await Promise.all([promiseA, promiseB]);
+
+            if (errors.length > 0) { 
+                errorBox.innerHTML = errors.join("<br>") + "<br><small>Tip: Verify spelling or check GitHub rate limits.</small>"; 
+                errorBox.classList.remove('hidden'); 
+            } 
+
+            renderHistoryTable(); 
+            loading.classList.add('hidden'); 
+        }); 
+
+        document.getElementById('export-duel-pdf-btn').addEventListener('click', () => { 
+            const userA = document.getElementById('res-username-A').innerText; 
+            const userB = document.getElementById('res-username-B').innerText; 
+
+            if (userA.includes("Not Found") || userB.includes("Not Found") || userA === "Target Alpha" || userB === "Target Beta") { 
+                alert("Please analyze both valid candidate metrics profiles first."); 
+                return; 
+            } 
+
+            const element = document.querySelector('.comparison-workspace'); 
+            const opt = { 
+                margin: 0.4, 
+                filename: `GitScope_Matrix_${userA}_vs_${userB}.pdf`, 
+                image: { type: 'jpeg', quality: 0.98 }, 
+                html2canvas: { scale: 2, useCORS: true, logging: false, backgroundColor: '#111827' }, 
+                jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' } 
+            }; 
+            html2pdf().set(opt).from(element).save(); 
+        }); 
+
+        document.addEventListener('DOMContentLoaded', () => { 
+            renderHistoryTable(); 
+            createDoughnut('chart-A', [], 'A'); 
+            createDoughnut('chart-B', [], 'B'); 
+        });
+    </script>
+</body>
+</html>
