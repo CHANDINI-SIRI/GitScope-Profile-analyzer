@@ -45,3 +45,4 @@ Since this engine is architected efficiently as a client-side utility, it requir
 1. Clone the repository:
 ```bash
    git clone [https://github.com/CHANDINI-SIRI/gitscope-profile-engine.git](https://github.com/CHANDINI-SIRI/gitscope-profile-engine.git)
+
