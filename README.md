@@ -1,3 +1,6 @@
+
+
+```markdown
 # GitScope Profile Engine 🚀
 
 An advanced, client-side developer analytics dashboard designed to run high-fidelity profile comparisons and data duels using live GitHub API metadata. Engineered with a heavy emphasis on structural algorithm optimization, client-side memory management, and robust protection against asynchronous network race conditions.
@@ -46,3 +49,22 @@ Since this engine is architected efficiently as a client-side utility, it requir
 ```bash
    git clone [https://github.com/CHANDINI-SIRI/gitscope-profile-engine.git](https://github.com/CHANDINI-SIRI/gitscope-profile-engine.git)
 
+```
+
+2. Navigate to the project folder:
+
+```bash
+   cd gitscope-profile-engine
+
+```
+
+3. Open `index.html` directly in any modern web browser.
+
+```
+
+---
+
+### 📥 Next Step:
+Commit this file to your repository (`[github.com/CHANDINI-SIRI](https://github.com/CHANDINI-SIRI)`). 🚀
+
+```
