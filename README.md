@@ -2,8 +2,7 @@
 
 An advanced, client-side developer analytics dashboard designed to run high-fidelity profile comparisons and data duels using live GitHub API metadata. Engineered with a heavy emphasis on structural algorithm optimization, client-side memory management, and robust protection against asynchronous network race conditions.
 
-🌐 **Live Demo:** [resilient-croquembouche-90e46d.netlify.app](https://resilient-croquembouche-90e46d.netlify.app/)
-
+🌐 **Live Demo:** https://gitscope-analyzer.netlify.app/
 ---
 
 ## 🛠️ Key Architectural Enhancements
